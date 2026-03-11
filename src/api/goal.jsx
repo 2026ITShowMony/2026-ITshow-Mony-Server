@@ -7,7 +7,16 @@ import { supabase } from './supabaseClient'
 //목표 예산, 목표, 계좌 잔액과 비교 조회?
 //목표 템플릿 <카테고리 db연동>? 100만원 챌린지 or 절약모드 or 균형모드
 //설정 요소? 예산은(필수) 월급(선택) 저축 목표(선택)
-//목표 생성
+
+
+//진행률 계산
+//목표 수정(필수)
+//목표 초과 체크
+
+//db안쪽?에 목표 템플릿 넣기.
+
+
+//목표 생성(저장)
 export async function createGoal(userId, goalData) {
     const { goal_type, period_type, period_detail, salary_timing, target_amount } = goalData;
 
@@ -29,17 +38,22 @@ export async function createGoal(userId, goalData) {
     }
 }
 
-//목표설정조회
-// export async function getActiveGoal(userId) {
-//     const {data,error} = await supabase
-//         .from('goals')
-//         .select('*')
-//         .eq('created_at',{ascending: false})
-//         .limit(1)
-//         .single();
-        // if (error?.code === 'PGRST116') return null; // 없으면 null
-        // if (error) throw new Error(error.message);
-        // return data;
-// }
+//목표 조회
+export async function findGoal(userId) {
+    const {data,error} = await supabase
+        .from('goal')
+        .select('*')
+        .eq('user_id',userId);
+    if(error){
+        return {success: false, message: error.message}
+    }else{
+        return {success: true, data};
+    }
+    
+}
 
+//목표 진행률 계산
+export async function progressGoal(params) {
+    
+}
 //export {supabase}
