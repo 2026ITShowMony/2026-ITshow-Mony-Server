@@ -8,6 +8,22 @@ import { supabase } from './supabaseClient'
 //목표 템플릿 <카테고리 db연동>? 100만원 챌린지 or 절약모드 or 균형모드
 //설정 요소? 예산은(필수) 월급(선택) 저축 목표(선택)
 
+/* const payload = {
+        user_id: userId,
+        goal_type: goalData.goal_type,
+        period_type: goalData.period_type,
+        period_detail: goalData.period_detail,
+        salary_timing: goalData.salary_timing,
+        target_amount: goalData.target_amount
+    };
+
+    const { data, error } = await supabase
+        .from('goal')
+        .insert(payload)
+        .select()
+        .single();
+ */
+
 
 //진행률 계산
 //목표 수정(필수)
