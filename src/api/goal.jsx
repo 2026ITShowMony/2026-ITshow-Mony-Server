@@ -114,4 +114,9 @@ export async function progressGoal(userId, periodDetail) {
         warningLevel
     };
 }
+
+export async function deleteGoal(id) {
+    const { error } = await supabase.from('goal').delete().eq('id', id);
+    if (error) throw error;
+}
 //export {supabase}
