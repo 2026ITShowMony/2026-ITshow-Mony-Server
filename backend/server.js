@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './swagger.js';  // 추가
 import accountRoutes from './routes/accounts.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
@@ -19,7 +21,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
+// Health Check
 app.get('/health', (req, res) => {
     res.json({ 
         status: '✅ Backend is running!',
@@ -27,6 +29,10 @@ app.get('/health', (req, res) => {
     });
 });
 
+// ⭐ Swagger UI 추가
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+// Routes
 app.use('/api/accounts', accountRoutes);
 
 // 404 Handler
@@ -43,7 +49,25 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`
-Backend running on http://localhost:${PORT}
-Frontend: ${process.env.FRONTEND_URL}
+╔════════════════════════════════════════╗
+║     🚀 Mony Backend Server Started     ║
+╚════════════════════════════════════════╝
+
+📍 Server URL: http://localhost:${PORT}
+📚 API Docs: http://localhost:${PORT}/api-docs ⭐
+🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}
+
+✅ Available Endpoints:
+   - GET  /health                    (Server status)
+   - POST   /api/accounts            (Create account)
+   - GET    /api/accounts            (Get all accounts)
+   - GET    /api/accounts/:id        (Get account by ID)
+   - PATCH  /api/accounts/:id        (Update account)
+   - DELETE /api/accounts/:id        (Delete account)
     `);
+});
+
+process.on('SIGINT', () => {
+    console.log('\n🛑 Server shutting down...');
+    process.exit(0);
 });
