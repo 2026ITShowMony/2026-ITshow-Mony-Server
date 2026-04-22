@@ -14,6 +14,7 @@ import { supabase } from './supabaseClient'
 //목표 초과 체크
 
 //db안쪽?에 목표 템플릿 넣기.
+//db 추가추가
 
 //목표 생성(저장)
 export async function createGoal(userId, goalData) {
