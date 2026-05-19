@@ -305,10 +305,10 @@ Features:
 
 | 이름 | 학번 | 담당 역할 | 구현 상황 |
 | :--- | :--- | :--- | :--- |
-| **이상연** | 3310 | Frontend / Backend (계좌 시스템) | ✅ AccountSettings, Accounts API |
+| **이상연** | 3310 | Backend / Backend (계좌 시스템) | ✅ AccountSettings, Accounts API |
 | **김이레** | 3103 | Frontend / UI Designer | 🔄 대시보드 작업 중 |
 | **정예서** | 3413 | Backend / DB (데이터 분석) | ✅ Goal API, Transactions API |
-| **장윤아** | 3614 | Backend / AI Prompt Engineer | 🔄 GPT 코칭 시스템 개발 중 |
+| **장윤아** | 3614 | Designer / Design | 🔄 와이어프레임 제작 중 |
 
 ---
 
