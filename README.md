@@ -1,16 +1,117 @@
-# React + Vite
+# 2026-ITshow-Mony-Server
+2026년 IT Show Mony 서버 레포지토리 입니다.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> 청년 1인 가구를 위한 스마트 생활비 도우미  
+> 자동 지출 분석과 AI 소비 코칭을 통해 건강한 소비 습관을 만들어주는 웹 서비스
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📌 프로젝트 소개
 
-## React Compiler
+**Mony**는 청년 1인 가구를 대상으로 한 개인 금융 관리 웹 애플리케이션입니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+카드 및 계좌의 지출 데이터를 기반으로 소비 패턴을 분석하고, AI 코치가 대화형 피드백을 제공하여 사용자가 자신의 소비 습관을 이해하고 개선할 수 있도록 돕습니다.
 
-## Expanding the ESLint configuration
+복잡한 가계부 입력 없이도 자동으로 지출을 분류하고, 예산 대비 진행률과 소비 패턴을 시각적으로 제공하여 현실적인 절약 습관을 형성할 수 있습니다.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🎯 프로젝트 목표
+
+- 자동 지출 분류를 통해 수기 입력 부담 최소화
+- 월간 예산 및 목표 설정 기능 제공
+- 소비 패턴 분석 및 시각화
+- AI 기반 대화형 소비 코칭 제공
+- 청년 1인 가구의 생활비 절약 습관 형성 지원
+
+---
+
+## ✨ 주요 기능
+
+### 🏠 온보딩
+- 월간 예산 목표 설정
+- 월급 입력 (선택)
+- 카드/계좌 연동 (더미 데이터 기반)
+- 자동 카테고리 분류 결과 확인
+
+### 📊 대시보드
+- 예산 대비 지출 진행률
+- 남은 금액 및 남은 일수 표시
+- 주요 소비 카테고리 확인
+- AI 소비 코치 피드백 카드
+
+### 💳 지출 내역 관리
+- 거래 내역 조회
+- 자동 카테고리 분류
+- 카테고리 수동 수정
+- 고정 지출 설정
+
+### 📈 소비 분석
+- 월별 총 지출 통계
+- 카테고리별 소비 비중
+- 고정 지출 vs 변동 지출 분석
+- 전월 대비 증감률 확인
+
+### 🤖 AI 소비 코치
+- 질문형 소비 피드백
+- 절약 팁 제공
+- 소비 패턴 기반 맞춤 조언
+
+### 🎯 목표 관리
+- 월간 예산 설정
+- 월급 기반 가용 예산 계산
+- 목표 초과 시 알림 및 코치 피드백
+
+---
+
+## 🧠 AI 코치 예시
+
+- “이번 달 커피 지출이 지난달보다 23% 늘었어요. 줄여볼까요?”
+- “예산의 90%를 사용했어요. 남은 기간을 어떻게 운영할까요?”
+- “배달비가 늘어난 이유가 있을까요?”
+
+---
+
+## 🗂️ 정보 구조 (IA)
+
+- Home (대시보드)
+- Transactions (지출 내역)
+- Insights (소비 분석)
+- Goals (목표/예산)
+- Coach (AI 코치)
+- Settings (설정)
+
+---
+
+## 📊 시각화 요소
+
+- 도넛 차트 (예산 진행률)
+- 바 차트 (카테고리별 지출)
+- 라인 차트 (일별 누적 지출)
+- 스택 바 차트 (고정 지출 vs 변동 지출)
+
+---
+
+## 🛠️ 기술 스택
+
+### Frontend
+- React
+- TypeScript
+- Tailwind CSS
+- Recharts
+- Axios
+
+### Backend
+- Spring Boot
+- Java
+- JPA
+- PostgreSQL
+
+### AI
+- OpenAI API (GPT)
+
+### Deployment
+- Vercel
+- Render 또는 Railway
+
+---
