@@ -1,0 +1,458 @@
+import express from 'express';
+import { supabase } from '../utils/supabase.js';
+
+const router = express.Router();
+
+function getUserId(req) {
+    return req.headers['user-id'] || null;
+}
+
+/**
+ * @swagger
+ * tags:
+ *   name: Buckets
+ *   description: 버킷리스트 API
+ */
+
+/**
+ * @swagger
+ * /api/buckets:
+ *   post:
+ *     summary: 버킷리스트 생성
+ *     tags: [Buckets]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: 제주도 여행
+ *               one:
+ *                 type: string
+ *                 example: 항공권 예매
+ *               two:
+ *                 type: string
+ *                 example: 숙소 예약
+ *               three:
+ *                 type: string
+ *                 example: 여행 출발
+ *               one_mony:
+ *                 type: integer
+ *                 example: 100000
+ *               two_mony:
+ *                 type: integer
+ *                 example: 200000
+ *               three_mony:
+ *                 type: integer
+ *                 example: 500000
+ *               img:
+ *                 type: string
+ *                 example: https://example.com/image.jpg
+ *               day:
+ *                 type: string
+ *                 example: 2026-12-25
+ *     responses:
+ *       201:
+ *         description: 생성 성공
+ *       400:
+ *         description: 생성 실패
+ */
+router.post('/', async (req, res, next) => {
+    try {
+        const { title, one, two, three, one_mony, two_mony, three_mony, img, day } = req.body;
+
+        const { data, error } = await supabase
+            .from('bucket_list')
+            .insert([{
+                title,
+                one,
+                two,
+                three,
+                one_mony,
+                two_mony,
+                three_mony,
+                probability: 0,
+                img,
+                day,
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: '버킷리스트 생성 실패',
+                error: error.message
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: '버킷리스트가 생성되었습니다',
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets:
+ *   get:
+ *     summary: 버킷리스트 전체 조회
+ *     tags: [Buckets]
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *       400:
+ *         description: 조회 실패
+ */
+router.get('/', async (req, res, next) => {
+    try {
+        const { data, error } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: '버킷리스트 조회 실패',
+                error: error.message
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `${data.length}개의 버킷리스트를 조회했습니다`,
+            data,
+            count: data.length
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/status/all:
+ *   get:
+ *     summary: 완료/진행중 목록 조회
+ *     tags: [Buckets]
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *       400:
+ *         description: 조회 실패
+ */
+router.get('/status/all', async (req, res, next) => {
+    try {
+        const { data, error } = await supabase
+            .from('bucket_do')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: 'bucket_do 조회 실패',
+                error: error.message
+            });
+        }
+
+        const done = data.filter(d => d.done_mony !== null);
+        const doing = data.filter(d => d.doing_mony !== null);
+
+        res.json({
+            success: true,
+            done,
+            doing,
+            doneCount: done.length,
+            doingCount: doing.length
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/{id}:
+ *   get:
+ *     summary: 버킷 단일 조회
+ *     tags: [Buckets]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *       404:
+ *         description: 버킷 없음
+ */
+router.get('/:id', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const { data, error } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !data) {
+            return res.status(404).json({
+                success: false,
+                message: '버킷을 찾을 수 없습니다'
+            });
+        }
+
+        res.json({
+            success: true,
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/{id}/probability:
+ *   patch:
+ *     summary: 퍼센트 업데이트 (100%면 자동 완료 이동)
+ *     tags: [Buckets]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               probability:
+ *                 type: integer
+ *                 example: 100
+ *     responses:
+ *       200:
+ *         description: 업데이트 성공
+ *       400:
+ *         description: 업데이트 실패
+ */
+router.patch('/:id/probability', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { probability } = req.body;
+
+        if (probability < 0 || probability > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'probability는 0~100 사이 값이어야 합니다'
+            });
+        }
+
+        const { data: bucket, error: updateError } = await supabase
+            .from('bucket_list')
+            .update({ probability })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (updateError || !bucket) {
+            return res.status(400).json({
+                success: false,
+                message: '퍼센트 업데이트 실패',
+                error: updateError?.message
+            });
+        }
+
+        if (probability === 100) {
+            const { data: doingRow } = await supabase
+                .from('bucket_do')
+                .select('*')
+                .eq('doing_mony', bucket.title)
+                .maybeSingle();
+
+            if (doingRow) {
+                await supabase
+                    .from('bucket_do')
+                    .update({ done_mony: bucket.title, doing_mony: null })
+                    .eq('id', doingRow.id);
+            } else {
+                await supabase
+                    .from('bucket_do')
+                    .insert([{ done_mony: bucket.title, doing_mony: null }]);
+            }
+
+            return res.json({
+                success: true,
+                message: '🎉 버킷 완료! done_mony로 이동되었습니다',
+                data: bucket
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `퍼센트가 ${probability}%로 업데이트되었습니다`,
+            data: bucket
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/{id}/doing:
+ *   post:
+ *     summary: 버킷 진행중 등록
+ *     tags: [Buckets]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *     responses:
+ *       201:
+ *         description: 진행중 등록 성공
+ *       400:
+ *         description: 등록 실패
+ *       404:
+ *         description: 버킷 없음
+ */
+router.post('/:id/doing', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const { data: bucket, error: bucketError } = await supabase
+            .from('bucket_list')
+            .select('title, probability')
+            .eq('id', id)
+            .single();
+
+        if (bucketError || !bucket) {
+            return res.status(404).json({
+                success: false,
+                message: '버킷을 찾을 수 없습니다'
+            });
+        }
+
+        if (bucket.probability === 100) {
+            return res.status(400).json({
+                success: false,
+                message: '이미 완료된 버킷입니다'
+            });
+        }
+
+        const { data: existing } = await supabase
+            .from('bucket_do')
+            .select('*')
+            .eq('doing_mony', bucket.title)
+            .maybeSingle();
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: '이미 진행중인 버킷입니다'
+            });
+        }
+
+        const { data, error } = await supabase
+            .from('bucket_do')
+            .insert([{ doing_mony: bucket.title, done_mony: null }])
+            .select()
+            .single();
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: '진행중 등록 실패',
+                error: error.message
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: '버킷이 진행중으로 등록되었습니다',
+            data
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/{id}:
+ *   delete:
+ *     summary: 버킷 삭제
+ *     tags: [Buckets]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: 삭제 성공
+ *       404:
+ *         description: 버킷 없음
+ */
+router.delete('/:id', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const { data: bucket, error: checkError } = await supabase
+            .from('bucket_list')
+            .select('id')
+            .eq('id', id)
+            .single();
+
+        if (checkError || !bucket) {
+            return res.status(404).json({
+                success: false,
+                message: '버킷을 찾을 수 없습니다'
+            });
+        }
+
+        const { error } = await supabase
+            .from('bucket_list')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                message: '버킷 삭제 실패',
+                error: error.message
+            });
+        }
+
+        res.json({
+            success: true,
+            message: '버킷이 삭제되었습니다'
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+export default router;

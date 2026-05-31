@@ -76,17 +76,17 @@ router.get('/', async (req, res, next) => {
 });
 
 // 목표 진행률 계산
-router.get('/progress/:periodDetail', async (req, res, next) => {
+router.get('/progress', async (req, res, next) => {
     try {
         const userId = getUserId(req);
-        const { periodDetail } = req.params;
+        const { periodDetail } = req.query;
 
         const { data: goal, error: goalError } = await supabase
             .from('goal')
             .select('target_amount')
             .eq('user_id', userId)
             .eq('period_detail', periodDetail)
-            .single();
+            .maybeSingle();
 
         if (goalError) {
             return res.status(404).json({

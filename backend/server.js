@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
-import { specs } from './swagger.js';  // 추가
+import { specs } from './swagger.js';
 import accountRoutes from './routes/accounts.js';
+import goalRoutes from './routes/goal.js';
+import bucketRoutes from './routes/bucket.js';  // ✅ 추가
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -34,6 +36,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
 app.use('/api/accounts', accountRoutes);
+app.use('/api/goals', goalRoutes);
+app.use('/api/buckets', bucketRoutes);  // ✅ 추가
 
 // 404 Handler
 app.use((req, res) => {
@@ -64,6 +68,16 @@ app.listen(PORT, () => {
    - GET    /api/accounts/:id        (Get account by ID)
    - PATCH  /api/accounts/:id        (Update account)
    - DELETE /api/accounts/:id        (Delete account)
+   - POST   /api/goals               (Create goal)
+   - GET    /api/goals               (Get all goals)
+   - GET    /api/goals/progress/:id  (Get goal progress)
+   - DELETE /api/goals/:id           (Delete goal)
+   - POST   /api/buckets             (Create bucket)
+   - GET    /api/buckets             (Get all buckets)
+   - GET    /api/buckets/status/all  (Get done/doing status)
+   - PATCH  /api/buckets/:id/probability (Update probability)
+   - POST   /api/buckets/:id/doing   (Set doing)
+   - DELETE /api/buckets/:id         (Delete bucket)
     `);
 });
 
