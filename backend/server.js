@@ -5,7 +5,10 @@ import swaggerUi from 'swagger-ui-express';
 import { specs } from './swagger.js';
 import accountRoutes from './routes/accounts.js';
 import goalRoutes from './routes/goal.js';
-import bucketRoutes from './routes/bucket.js';  // ✅ 추가
+import bucketRoutes from './routes/bucket.js';
+import analysisRoutes from './routes/transactions.js';
+import groqRoutes from './routes/groq.js';
+import bucketRoutes from './routes/bucket.js';
 import bankRoutes from './routes/bank.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
@@ -13,6 +16,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 dotenv.config();
 
 const app = express();
+const serverStartedAt = Date.now();
 
 // Middleware
 app.use(requestLogger);
@@ -20,7 +24,7 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'user-id']
 }));
 app.use(express.json());
 
@@ -32,13 +36,21 @@ app.get('/health', (req, res) => {
     });
 });
 
-// ⭐ Swagger UI 추가
+app.get('/api/runtime', (req, res) => {
+    res.json({
+        serverStartedAt,
+    });
+});
+
+// Swagger UI 추가
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
 app.use('/api/accounts', accountRoutes);
 app.use('/api/goals', goalRoutes);
-app.use('/api/buckets', bucketRoutes);  // ✅ 추가
+app.use('/api/buckets', bucketRoutes);
+app.use('/api/analysis', analysisRoutes);
+app.use('/api/groq', groqRoutes);
 app.use('/api/bank', bankRoutes);
 
 // 404 Handler
@@ -80,6 +92,11 @@ app.listen(PORT, () => {
    - PATCH  /api/buckets/:id/probability (Update probability)
    - POST   /api/buckets/:id/doing   (Set doing)
    - DELETE /api/buckets/:id         (Delete bucket)
+   - GET    /api/analysis/summary/:periodDetail
+   - GET    /api/analysis/category/:periodDetail
+   - GET    /api/analysis/goal-category/:periodDetail
+   - GET    /api/analysis/daily/:periodDetail
+   - GET    /api/analysis/uncategorized/:periodDetail
     `);
 });
 
