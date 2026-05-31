@@ -3,10 +3,6 @@ import { supabase } from '../utils/supabase.js';
 
 const router = express.Router();
 
-function getUserId(req) {
-    return req.headers['user-id'] || null;
-}
-
 /**
  * @swagger
  * tags:
@@ -30,6 +26,10 @@ function getUserId(req) {
  *               title:
  *                 type: string
  *                 example: 제주도 여행
+ *               category:
+ *                 type: string
+ *                 enum: [여행, 취미, 자기계발]
+ *                 example: 여행
  *               one:
  *                 type: string
  *                 example: 항공권 예매
@@ -48,6 +48,9 @@ function getUserId(req) {
  *               three_mony:
  *                 type: integer
  *                 example: 500000
+ *               mony_ing:
+ *                 type: integer
+ *                 example: 500000
  *               img:
  *                 type: string
  *                 example: https://example.com/image.jpg
@@ -62,19 +65,31 @@ function getUserId(req) {
  */
 router.post('/', async (req, res, next) => {
     try {
-        const { title, one, two, three, one_mony, two_mony, three_mony, img, day } = req.body;
+        const { title, category, one, two, three, one_mony, two_mony, three_mony, mony_ing, img, day } = req.body;
+
+        // category 유효성 검사
+        const validCategories = ['여행', '취미', '자기계발'];
+        if (category && !validCategories.includes(category)) {
+            return res.status(400).json({
+                success: false,
+                message: 'category는 여행, 취미, 자기계발 중 하나여야 합니다'
+            });
+        }
 
         const { data, error } = await supabase
             .from('bucket_list')
             .insert([{
                 title,
+                category,
                 one,
                 two,
                 three,
                 one_mony,
                 two_mony,
                 three_mony,
-                probability: 0,
+                mony_ing: mony_ing || 0,
+                mony_finish: 0,  // 처음엔 0원
+                probability: 0,  // 처음엔 0%
                 img,
                 day,
             }])
@@ -105,6 +120,13 @@ router.post('/', async (req, res, next) => {
  *   get:
  *     summary: 버킷리스트 전체 조회
  *     tags: [Buckets]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [여행, 취미, 자기계발]
+ *         description: 카테고리 필터
  *     responses:
  *       200:
  *         description: 조회 성공
@@ -113,10 +135,19 @@ router.post('/', async (req, res, next) => {
  */
 router.get('/', async (req, res, next) => {
     try {
-        const { data, error } = await supabase
+        const { category } = req.query;
+
+        let query = supabase
             .from('bucket_list')
             .select('*')
             .order('created_at', { ascending: false });
+
+        // 카테고리 필터
+        if (category) {
+            query = query.eq('category', category);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             return res.status(400).json({
@@ -226,9 +257,9 @@ router.get('/:id', async (req, res, next) => {
 
 /**
  * @swagger
- * /api/buckets/{id}/probability:
+ * /api/buckets/{id}/money:
  *   patch:
- *     summary: 퍼센트 업데이트 (100%면 자동 완료 이동)
+ *     summary: 버킷 현재 금액 업데이트 (자동으로 퍼센트 계산)
  *     tags: [Buckets]
  *     parameters:
  *       - in: path
@@ -244,42 +275,55 @@ router.get('/:id', async (req, res, next) => {
  *           schema:
  *             type: object
  *             properties:
- *               probability:
+ *               mony_finish:
  *                 type: integer
- *                 example: 100
+ *                 example: 250000
  *     responses:
  *       200:
  *         description: 업데이트 성공
  *       400:
  *         description: 업데이트 실패
  */
-router.patch('/:id/probability', async (req, res, next) => {
+router.patch('/:id/money', async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { probability } = req.body;
+        const { mony_finish } = req.body;
 
-        if (probability < 0 || probability > 100) {
-            return res.status(400).json({
+        // 현재 버킷 조회
+        const { data: bucket, error: fetchError } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !bucket) {
+            return res.status(404).json({
                 success: false,
-                message: 'probability는 0~100 사이 값이어야 합니다'
+                message: '버킷을 찾을 수 없습니다'
             });
         }
 
-        const { data: bucket, error: updateError } = await supabase
+        // 퍼센트 자동 계산
+        const probability = bucket.mony_ing > 0
+            ? Math.min(Math.round((mony_finish / bucket.mony_ing) * 100), 100)
+            : 0;
+
+        const { data: updated, error: updateError } = await supabase
             .from('bucket_list')
-            .update({ probability })
+            .update({ mony_finish, probability })
             .eq('id', id)
             .select()
             .single();
 
-        if (updateError || !bucket) {
+        if (updateError) {
             return res.status(400).json({
                 success: false,
-                message: '퍼센트 업데이트 실패',
-                error: updateError?.message
+                message: '금액 업데이트 실패',
+                error: updateError.message
             });
         }
 
+        // 100%면 done_mony로 자동 이동
         if (probability === 100) {
             const { data: doingRow } = await supabase
                 .from('bucket_do')
@@ -300,15 +344,17 @@ router.patch('/:id/probability', async (req, res, next) => {
 
             return res.json({
                 success: true,
-                message: '🎉 버킷 완료! done_mony로 이동되었습니다',
-                data: bucket
+                message: '🎉 목표 금액 달성! 버킷이 완료되었습니다',
+                data: updated,
+                probability
             });
         }
 
         res.json({
             success: true,
-            message: `퍼센트가 ${probability}%로 업데이트되었습니다`,
-            data: bucket
+            message: `현재 ${mony_finish}원 / 목표 ${bucket.mony_ing}원 (${probability}%)`,
+            data: updated,
+            probability
         });
     } catch (error) {
         next(error);
