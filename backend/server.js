@@ -8,6 +8,8 @@ import goalRoutes from './routes/goal.js';
 import bucketRoutes from './routes/bucket.js';
 import analysisRoutes from './routes/transactions.js';
 import groqRoutes from './routes/groq.js';
+import bucketRoutes from './routes/bucket.js';
+import bankRoutes from './routes/bank.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -40,7 +42,7 @@ app.get('/api/runtime', (req, res) => {
     });
 });
 
-// ⭐ Swagger UI 추가
+// Swagger UI 추가
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
@@ -49,6 +51,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/buckets', bucketRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/groq', groqRoutes);
+app.use('/api/bank', bankRoutes);
 
 // 404 Handler
 app.use((req, res) => {
