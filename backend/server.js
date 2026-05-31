@@ -6,6 +6,7 @@ import { specs } from './swagger.js';
 import accountRoutes from './routes/accounts.js';
 import goalRoutes from './routes/goal.js';
 import bucketRoutes from './routes/bucket.js';  // ✅ 추가
+import bankRoutes from './routes/bank.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -38,6 +39,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/accounts', accountRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/buckets', bucketRoutes);  // ✅ 추가
+app.use('/api/bank', bankRoutes);
 
 // 404 Handler
 app.use((req, res) => {
