@@ -8,7 +8,6 @@ import goalRoutes from './routes/goal.js';
 import bucketRoutes from './routes/bucket.js';
 import analysisRoutes from './routes/transactions.js';
 import groqRoutes from './routes/groq.js';
-import bucketRoutes from './routes/bucket.js';
 import bankRoutes from './routes/bank.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
