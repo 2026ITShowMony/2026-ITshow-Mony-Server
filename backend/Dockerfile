@@ -14,6 +14,6 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-EXPOSE 3002
+EXPOSE 3000
 
 CMD ["node", "server.js"]

@@ -2,15 +2,15 @@ services:
   api:
     build: .
     ports:
-      - "3002:3002"
+      - "3000:3000"
     env_file:
       - .env
     environment:
-      - PORT=3002
+      - PORT=3000
       - NODE_ENV=production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3002/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
