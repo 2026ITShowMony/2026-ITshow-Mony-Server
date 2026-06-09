@@ -46,13 +46,17 @@ function getUserId(req) {
 router.post('/', async (req, res, next) => {
     try {
         const userId = getUserId(req);
-        const { goal_type } = req.body;
+        const { goal_type, period_type, period_detail, salary_timing, target_amount } = req.body;
 
         const { data, error } = await supabase
             .from('goal')
             .insert([{
                 user_id: userId,
                 goal_type,
+                period_type,
+                period_detail,
+                salary_timing,
+                target_amount,
             }])
             .select()
             .single();
