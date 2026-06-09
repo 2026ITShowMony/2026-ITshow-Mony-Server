@@ -284,6 +284,61 @@ router.get('/:id', async (req, res, next) => {
  *       400:
  *         description: 업데이트 실패
  */
+router.patch('/:id/deposit', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { amount } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ success: false, message: '유효한 금액을 입력해주세요' });
+        }
+
+        const { data: bucket, error: fetchError } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !bucket) {
+            return res.status(404).json({ success: false, message: '버킷을 찾을 수 없습니다' });
+        }
+
+        const mony_finish = (bucket.mony_finish || 0) + amount;
+        const probability = bucket.mony_ing > 0
+            ? Math.min(Math.round((mony_finish / bucket.mony_ing) * 100), 100)
+            : 0;
+
+        const { data: updated, error: updateError } = await supabase
+            .from('bucket_list')
+            .update({ mony_finish, probability })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (updateError) {
+            return res.status(400).json({ success: false, message: '저축 실패', error: updateError.message });
+        }
+
+        if (probability === 100) {
+            const { data: doingRow } = await supabase
+                .from('bucket_do')
+                .select('*')
+                .eq('doing_mony', bucket.title)
+                .maybeSingle();
+
+            if (doingRow) {
+                await supabase.from('bucket_do').update({ done_mony: bucket.title, doing_mony: null }).eq('id', doingRow.id);
+            } else {
+                await supabase.from('bucket_do').insert([{ done_mony: bucket.title, doing_mony: null }]);
+            }
+        }
+
+        res.json({ success: true, data: updated, probability });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.patch('/:id/money', async (req, res, next) => {
     try {
         const { id } = req.params;
