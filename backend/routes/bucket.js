@@ -3,6 +3,35 @@ import { supabase } from '../utils/supabase.js';
 
 const router = express.Router();
 
+async function syncBucketDoneStatus(bucket, probability) {
+    if (probability !== 100) return;
+
+    const { data: doneRow } = await supabase
+        .from('bucket_do')
+        .select('id')
+        .eq('done_mony', bucket.title)
+        .maybeSingle();
+
+    if (doneRow) return;
+
+    const { data: doingRow } = await supabase
+        .from('bucket_do')
+        .select('*')
+        .eq('doing_mony', bucket.title)
+        .maybeSingle();
+
+    if (doingRow) {
+        await supabase
+            .from('bucket_do')
+            .update({ done_mony: bucket.title, doing_mony: null })
+            .eq('id', doingRow.id);
+    } else {
+        await supabase
+            .from('bucket_do')
+            .insert([{ done_mony: bucket.title, doing_mony: null }]);
+    }
+}
+
 /**
  * @swagger
  * tags:
@@ -342,7 +371,14 @@ router.patch('/:id/deposit', async (req, res, next) => {
 router.patch('/:id/money', async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { mony_finish } = req.body;
+        const mony_finish = Number(req.body.mony_finish);
+
+        if (!Number.isFinite(mony_finish) || mony_finish < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'mony_finish는 0 이상의 숫자여야 합니다'
+            });
+        }
 
         // 현재 버킷 조회
         const { data: bucket, error: fetchError } = await supabase
@@ -359,13 +395,17 @@ router.patch('/:id/money', async (req, res, next) => {
         }
 
         // 퍼센트 자동 계산
+        const nextMonyFinish = bucket.mony_ing > 0
+            ? Math.min(mony_finish, bucket.mony_ing)
+            : mony_finish;
+
         const probability = bucket.mony_ing > 0
-            ? Math.min(Math.round((mony_finish / bucket.mony_ing) * 100), 100)
+            ? Math.min(Math.round((nextMonyFinish / bucket.mony_ing) * 100), 100)
             : 0;
 
         const { data: updated, error: updateError } = await supabase
             .from('bucket_list')
-            .update({ mony_finish, probability })
+            .update({ mony_finish: nextMonyFinish, probability })
             .eq('id', id)
             .select()
             .single();
@@ -380,22 +420,7 @@ router.patch('/:id/money', async (req, res, next) => {
 
         // 100%면 done_mony로 자동 이동
         if (probability === 100) {
-            const { data: doingRow } = await supabase
-                .from('bucket_do')
-                .select('*')
-                .eq('doing_mony', bucket.title)
-                .maybeSingle();
-
-            if (doingRow) {
-                await supabase
-                    .from('bucket_do')
-                    .update({ done_mony: bucket.title, doing_mony: null })
-                    .eq('id', doingRow.id);
-            } else {
-                await supabase
-                    .from('bucket_do')
-                    .insert([{ done_mony: bucket.title, doing_mony: null }]);
-            }
+            await syncBucketDoneStatus(bucket, probability);
 
             return res.json({
                 success: true,
@@ -407,8 +432,81 @@ router.patch('/:id/money', async (req, res, next) => {
 
         res.json({
             success: true,
-            message: `현재 ${mony_finish}원 / 목표 ${bucket.mony_ing}원 (${probability}%)`,
+            message: `현재 ${nextMonyFinish}원 / 목표 ${bucket.mony_ing}원 (${probability}%)`,
             data: updated,
+            probability
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/buckets/{id}/deposit:
+ *   patch:
+ *     summary: 버킷리스트 저금통 적립
+ *     tags: [Buckets]
+ */
+router.patch('/:id/deposit', async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const amount = Number(req.body.amount);
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'amount는 0보다 큰 숫자여야 합니다'
+            });
+        }
+
+        const { data: bucket, error: fetchError } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !bucket) {
+            return res.status(404).json({
+                success: false,
+                message: '버킷을 찾을 수 없습니다'
+            });
+        }
+
+        const currentMonyFinish = Number(bucket.mony_finish) || 0;
+        const targetAmount = Number(bucket.mony_ing) || 0;
+        const nextMonyFinish = targetAmount > 0
+            ? Math.min(currentMonyFinish + amount, targetAmount)
+            : currentMonyFinish + amount;
+        const depositedAmount = nextMonyFinish - currentMonyFinish;
+        const probability = targetAmount > 0
+            ? Math.min(Math.round((nextMonyFinish / targetAmount) * 100), 100)
+            : 0;
+
+        const { data: updated, error: updateError } = await supabase
+            .from('bucket_list')
+            .update({ mony_finish: nextMonyFinish, probability })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (updateError) {
+            return res.status(400).json({
+                success: false,
+                message: '저금통 적립 실패',
+                error: updateError.message
+            });
+        }
+
+        await syncBucketDoneStatus(bucket, probability);
+
+        res.json({
+            success: true,
+            message: probability === 100
+                ? '🎉 목표 금액 달성! 버킷이 완료되었습니다'
+                : `${depositedAmount}원이 버킷리스트 저금통에 적립되었습니다`,
+            data: updated,
+            depositedAmount,
             probability
         });
     } catch (error) {
