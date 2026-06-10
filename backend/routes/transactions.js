@@ -39,10 +39,7 @@ router.get('/goal-category/:periodDetail', async (req, res, next) => {
 
         const accountIds = await getAccountIds(userId);
         if (accountIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: '연결된 계좌/카드가 없습니다'
-            });
+            return res.json({ success: true, categories: [] });
         }
 
         const { start, end } = getDateRange(periodDetail);
@@ -55,7 +52,7 @@ router.get('/goal-category/:periodDetail', async (req, res, next) => {
             .lte('transaction_date', end);
 
         if (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: '카테고리 조회 실패',
                 error: error.message
@@ -88,10 +85,7 @@ router.get('/category/:periodDetail', async (req, res, next) => {
 
         const accountIds = await getAccountIds(userId);
         if (accountIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: '연결된 계좌/카드가 없습니다'
-            });
+            return res.json({ success: true, data: [] });
         }
 
         const { start, end } = getDateRange(periodDetail);
@@ -104,7 +98,7 @@ router.get('/category/:periodDetail', async (req, res, next) => {
             .lte('transaction_date', end);
 
         if (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: '카테고리 소비 조회 실패',
                 error: error.message
@@ -137,10 +131,7 @@ router.get('/summary/:periodDetail', async (req, res, next) => {
 
         const accountIds = await getAccountIds(userId);
         if (accountIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: '연결된 계좌/카드가 없습니다'
-            });
+            return res.json({ success: true, data: { total: 0, fixed: 0, variable: 0 } });
         }
 
         const { start, end } = getDateRange(periodDetail);
@@ -153,7 +144,7 @@ router.get('/summary/:periodDetail', async (req, res, next) => {
             .lte('transaction_date', end);
 
         if (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: '지출 요약 조회 실패',
                 error: error.message
@@ -184,10 +175,7 @@ router.get('/daily/:periodDetail', async (req, res, next) => {
 
         const accountIds = await getAccountIds(userId);
         if (accountIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: '연결된 계좌/카드가 없습니다'
-            });
+            return res.json({ success: true, data: [] });
         }
 
         const { start, end } = getDateRange(periodDetail);
@@ -201,7 +189,7 @@ router.get('/daily/:periodDetail', async (req, res, next) => {
             .order('transaction_date', { ascending: true });
 
         if (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: '일별 소비 조회 실패',
                 error: error.message
@@ -238,10 +226,7 @@ router.get('/uncategorized/:periodDetail', async (req, res, next) => {
 
         const accountIds = await getAccountIds(userId);
         if (accountIds.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: '연결된 계좌/카드가 없습니다'
-            });
+            return res.json({ success: true, data: [], count: 0 });
         }
 
         const { start, end } = getDateRange(periodDetail);
@@ -255,7 +240,7 @@ router.get('/uncategorized/:periodDetail', async (req, res, next) => {
             .lte('transaction_date', end);
 
         if (error) {
-            return res.status(400).json({
+            return res.status(500).json({
                 success: false,
                 message: '미분류 소비 조회 실패',
                 error: error.message
