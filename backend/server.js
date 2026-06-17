@@ -9,6 +9,7 @@ import bucketRoutes from './routes/bucket.js';
 import analysisRoutes from './routes/transactions.js';
 import groqRoutes from './routes/groq.js';
 import bankRoutes from './routes/bank.js';
+import statsRoutes from './routes/stats.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -52,6 +53,7 @@ app.use('/api/buckets', bucketRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/groq', groqRoutes);
 app.use('/api/bank', bankRoutes);
+app.use('/api/stats', statsRoutes);
 
 // 404 Handler
 app.use((req, res) => {
